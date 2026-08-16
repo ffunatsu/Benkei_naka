@@ -37,6 +37,24 @@ daku      = %w(が ぎ ぐ げ ご ざ じ ず ぜ ぞ だ ぢ づ で ど ば �
 r_daku    = %w(ga gi gu ge go za zi zu ze zo da di du de do ba bi bu be bo vu)
 t_daku    = %w(か き く け こ さ し す せ そ た ち つ て と は ひ ふ へ ほ う)
 
+lnaka    = %w(ね り め {←} せ み ま ち ほ ひ を こ ぬ)
+r_lnaka   = %w(ne ri me ← se mi ma ti ho hi wo 、改 nu)
+
+rnaka    = %w({→} さ え も つ ふ こ お な む わ れ)
+r_rnaka   = %w(→ sa e mo tu hu 、改 o 。改 mu wa re)
+
+l2naka    = %w(に) # + D (ま)
+r_l2naka   = %w(ni)
+
+r2naka    = %w(の) # + K (も)
+r_r2naka   = %w(no)
+
+r3naka    = %w(う) # + M (な)
+r_r3naka   = %w(。改)
+
+cnaka    = %w(や ゆ よ) # + C (は)
+r_cnaka   = %w(ya yu yo)
+
 handaku   = %w(ぱ ぴ ぷ ぺ ぽ)
 t_handaku = %w(は ひ ふ へ ほ)
 r_handaku = %w(pa pi pu pe po)
@@ -125,6 +143,60 @@ daku.each_with_index do |k, i|
       puts teigi(eiji[j], r_daku[i], k, "kVK_ANSI_J")
       # puts teigi(eiji[j], r_daku[i], k + "(冗長)", "kVK_ANSI_J", "kVK_Space")
     end
+  end
+end
+
+puts
+puts "  // 中指 左"
+daku.each_with_index do |k, i|
+  j = tanda.index(lnaka[i]) || shifted.index(lnaka[i])
+  if j && j >= 0
+    puts teigi(eiji[j], r_lnaka[i], k, "kVK_ANSI_K")
+  end
+end
+
+puts
+puts "  // 中指 右"
+daku.each_with_index do |k, i|
+  j = tanda.index(rnaka[i]) || shifted.index(rnaka[i])
+  if j && j >= 0
+    puts teigi(eiji[j], r_rnaka[i], k, "kVK_ANSI_D")
+  end
+end
+
+puts
+puts "  // 中指 やゆよ"
+daku.each_with_index do |k, i|
+  j = tanda.index(cnaka[i]) || shifted.index(cnaka[i])
+  if j && j >= 0
+    puts teigi(eiji[j], r_cnaka[i], k, "kVK_ANSI_C")
+  end
+end
+
+puts
+puts "  // 中指 の"
+daku.each_with_index do |k, i|
+  j = tanda.index(r2naka[i]) || shifted.index(cnaka[i])
+  if j && j >= 0
+    puts teigi(eiji[j], r_r2naka[i], k, "kVK_ANSI_K")
+  end
+end
+
+puts
+puts "  // 中指 に"
+daku.each_with_index do |k, i|
+  j = tanda.index(l2naka[i]) || shifted.index(cnaka[i])
+  if j && j >= 0
+    puts teigi(eiji[j], r_l2naka[i], k, "kVK_ANSI_D")
+  end
+end
+
+puts
+puts "  // 中指 。"
+daku.each_with_index do |k, i|
+  j = tanda.index(r_r3naka[i]) || shifted.index(cnaka[i])
+  if j && j >= 0
+    puts teigi(eiji[j], r_r3naka[i], k, "kVK_ANSI_M")
   end
 end
 

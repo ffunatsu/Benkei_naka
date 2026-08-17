@@ -4,6 +4,8 @@ Benkeiを[中指薙刀式](https://gist.github.com/ffunatsu/9950c881a8faf6162257
 
 （後置シフトを使いたかったので、Benkei2ではなくBenkei1をベースにフォークしました。）
 
+## インストール
+
 [Releases](https://github.com/ffunatsu/Benkei_naka/releases/)ページよりMac用のアプリ (.app) がzipダウンロードできます。
 
 ---

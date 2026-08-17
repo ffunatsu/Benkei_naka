@@ -43,7 +43,7 @@ r_lnaka   = %w(ne ri me ← se mi ma ti ho hi wo 、改 nu)
 rnaka    = %w({→} さ え も つ ふ こ お な む わ れ)
 r_rnaka   = %w(→ sa e mo tu hu 、改 o 。改 mu wa re)
 
-l2naka    = %w(に) # + D (ま)
+l2naka    = %w(ま) # + D (に)
 r_l2naka   = %w(ni)
 
 r2naka    = %w(の) # + K (も)

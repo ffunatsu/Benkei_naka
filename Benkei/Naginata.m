@@ -222,7 +222,7 @@ NSMutableDictionary *ngdic; // CGKeycodeからNGKeyへの辞書。同時にこ�
                    [NSArray arrayWithObjects: [NSNumber numberWithInt:kVK_ANSI_N], [NSNumber numberWithInt:kVK_ANSI_O], nil], [NSSet setWithObjects: [NSNumber numberWithInt:kVK_ANSI_K], [NSNumber numberWithInt:kVK_ANSI_J], nil], // が
 
                      // 中指 に
-                   [NSArray arrayWithObjects: [NSNumber numberWithInt:kVK_ANSI_N], [NSNumber numberWithInt:kVK_ANSI_I], nil], [NSSet setWithObjects: [NSNumber numberWithInt:kVK_ANSI_D], [NSNumber numberWithInt:kVK_ANSI_D], nil], // が
+                   [NSArray arrayWithObjects: [NSNumber numberWithInt:kVK_ANSI_N], [NSNumber numberWithInt:kVK_ANSI_I], nil], [NSSet setWithObjects: [NSNumber numberWithInt:kVK_ANSI_D], [NSNumber numberWithInt:kVK_ANSI_F], nil], // が
 
                      // 中指 。
 
@@ -473,7 +473,6 @@ NSMutableDictionary *ngdic; // CGKeycodeからNGKeyへの辞書。同時にこ�
                    [NSArray arrayWithObjects: [[ProperAction alloc] initWith:@"c"], nil], [NSSet setWithObjects: [NSNumber numberWithInt:kVK_ANSI_C], [NSNumber numberWithInt:kVK_ANSI_U], [NSNumber numberWithInt:kVK_ANSI_I], nil], // 固有名詞 C
                    [NSArray arrayWithObjects: [[ProperAction alloc] initWith:@"v"], nil], [NSSet setWithObjects: [NSNumber numberWithInt:kVK_ANSI_V], [NSNumber numberWithInt:kVK_ANSI_U], [NSNumber numberWithInt:kVK_ANSI_I], nil], // 固有名詞 V
                    [NSArray arrayWithObjects: [[ProperAction alloc] initWith:@"b"], nil], [NSSet setWithObjects: [NSNumber numberWithInt:kVK_ANSI_B], [NSNumber numberWithInt:kVK_ANSI_U], [NSNumber numberWithInt:kVK_ANSI_I], nil], // 固有名詞 B
-
 
 
         nil];

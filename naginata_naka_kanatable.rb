@@ -113,7 +113,23 @@ def teigi(a, b, c, prefix="", suffix="")
 
   _b = []
   [b].flatten.join("").each_char {|x| _b << x }
-  bs = _b.map{|k| "[NSNumber numberWithInt:kVK_ANSI_#{k.upcase}]"}.join(", ")
+  bs = _b.map{|k|
+    if k == "→" then
+      "[NSNumber numberWithInt:kVK_RightArrow]"
+    elsif k == "←" then
+      "[NSNumber numberWithInt:kVK_LeftArrow]"
+    elsif k == "改" then
+      "[NSNumber numberWithInt:kVK_Return]"
+    elsif k == "、" then
+      "[NSNumber numberWithInt:kVK_ANSI_Comma]"
+    elsif k == "。" then
+      "[NSNumber numberWithInt:kVK_ANSI_Period]"
+    elsif k == "-" then
+      "[NSNumber numberWithInt:kVK_ANSI_Minus]" 
+    else
+      "[NSNumber numberWithInt:kVK_ANSI_#{k.upcase}]"
+    end
+  }.join(", ")
 
   sprintf("[NSArray arrayWithObjects: #{bs}, nil], [NSSet setWithObjects: #{as}, nil], // #{c}")
 end
@@ -176,7 +192,7 @@ end
 puts
 puts "  // 中指 の"
 daku.each_with_index do |k, i|
-  j = tanda.index(r2naka[i]) || shifted.index(cnaka[i])
+  j = tanda.index(r2naka[i]) || shifted.index(r2naka[i])
   if j && j >= 0
     puts teigi(eiji[j], r_r2naka[i], k, "kVK_ANSI_K")
   end
@@ -185,7 +201,7 @@ end
 puts
 puts "  // 中指 に"
 daku.each_with_index do |k, i|
-  j = tanda.index(l2naka[i]) || shifted.index(cnaka[i])
+  j = tanda.index(l2naka[i]) || shifted.index(l2naka[i])
   if j && j >= 0
     puts teigi(eiji[j], r_l2naka[i], k, "kVK_ANSI_D")
   end
@@ -194,7 +210,7 @@ end
 puts
 puts "  // 中指 。"
 daku.each_with_index do |k, i|
-  j = tanda.index(r_r3naka[i]) || shifted.index(cnaka[i])
+  j = tanda.index(r_r3naka[i]) || shifted.index(r_r3naka[i])
   if j && j >= 0
     puts teigi(eiji[j], r_r3naka[i], k, "kVK_ANSI_M")
   end

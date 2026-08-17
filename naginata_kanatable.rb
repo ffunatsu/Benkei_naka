@@ -95,7 +95,23 @@ def teigi(a, b, c, prefix="", suffix="")
 
   _b = []
   [b].flatten.join("").each_char {|x| _b << x }
-  bs = _b.map{|k| "[NSNumber numberWithInt:kVK_ANSI_#{k.upcase}]"}.join(", ")
+  bs = _b.map{|k|
+    if k == "→" then
+      "[NSNumber numberWithInt:kVK_RightArrow]"
+    elsif k == "←" then
+      "[NSNumber numberWithInt:kVK_LeftArrow]"
+    elsif k == "改" then
+      "[NSNumber numberWithInt:kVK_Return]"
+    elsif k == "、" then
+      "[NSNumber numberWithInt:kVK_ANSI_Comma]"
+    elsif k == "。" then
+      "[NSNumber numberWithInt:kVK_ANSI_Period]"
+    elsif k == "-" then
+      "[NSNumber numberWithInt:kVK_ANSI_Minus]" 
+    else
+      "[NSNumber numberWithInt:kVK_ANSI_#{k.upcase}]"
+    end
+  }.join(", ")
 
   sprintf("[NSArray arrayWithObjects: #{bs}, nil], [NSSet setWithObjects: #{as}, nil], // #{c}")
 end

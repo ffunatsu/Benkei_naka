@@ -1,6 +1,6 @@
 # Benkei_naka
 
-Benkeiを[中指薙刀式](https://gist.github.com/ffunatsu/9950c881a8faf616225790aa719544f4)に対応させるためのフォークです。薙刀式v18（トップ版）をベースにしています。
+Benkeiを[中指薙刀式](https://gist.github.com/ffunatsu/9950c881a8faf616225790aa719544f4)に対応させるためのフォークです。薙刀式v18（トップ版）をベースにしています。（後置シフトを使いたかったので、Benkei2ではなくBenkei1をベースにフォークしました。）
 
 [Releases](https://github.com/ffunatsu/Benkei_naka/releases/)ページよりMac用のアプリ (.app) がzipダウンロードできます。
 

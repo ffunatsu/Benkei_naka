@@ -27,7 +27,81 @@
 
 @implementation AppDelegate
 
-static NSArray *arKanaMethods;
+static BOOL isJapaneseInputSource(TISInputSourceRef inputSource) {
+    if (!inputSource) {
+        return NO;
+    }
+    
+    NSString *modeID = (__bridge NSString *)TISGetInputSourceProperty(inputSource, kTISPropertyInputModeID);
+    NSString *sourceID = (__bridge NSString *)TISGetInputSourceProperty(inputSource, kTISPropertyInputSourceID);
+    NSArray *languages = (__bridge NSArray *)TISGetInputSourceProperty(inputSource, kTISPropertyInputSourceLanguages);
+    
+    // 1. モードIDが存在する場合（Google日本語入力、Apple日本語入力/ことえり、ATOK等の各入力モード）
+    if (modeID != nil && modeID.length > 0) {
+        // 英数・直接入力・Roman系モードは日本語（かな）入力ではない
+        if ([modeID rangeOfString:@"Roman" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+            [modeID rangeOfString:@"Direct" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+            [modeID rangeOfString:@"ASCII" options:NSCaseInsensitiveSearch].location != NSNotFound) {
+            return NO;
+        }
+        
+        // 日本語入力モード（ひらがな、カタカナ、半角カナなど）
+        // 例: com.google.inputmethod.Japanese.Hiragana, com.google.inputmethod.Japanese.Katakana
+        // 例: com.apple.inputmethod.Japanese, com.apple.inputmethod.Japanese.Hiragana, com.apple.inputmethod.Kotoeri...
+        // 例: com.justsystems.inputmethod.atok...
+        // 例: jp.monokakido.inputmethod.Kawasemi...
+        // 例: jp.sourceforge.inputmethod.aquaskk...
+        if ([modeID rangeOfString:@"Japanese" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+            [modeID rangeOfString:@"Hiragana" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+            [modeID rangeOfString:@"Katakana" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+            [modeID rangeOfString:@"Kana" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+            [modeID rangeOfString:@"Kotoeri" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+            [modeID rangeOfString:@"atok" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+            [modeID rangeOfString:@"kawasemi" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+            [modeID rangeOfString:@"aquaskk" options:NSCaseInsensitiveSearch].location != NSNotFound) {
+            return YES;
+        }
+        
+        if (languages != nil && [languages containsObject:@"ja"]) {
+            return YES;
+        }
+        return NO;
+    }
+    
+    // 2. モードIDが無い場合（sourceIDによる判定）
+    if (sourceID != nil && sourceID.length > 0) {
+        // 英数用キーレイアウト等
+        if ([sourceID rangeOfString:@"Roman" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+            [sourceID rangeOfString:@"Direct" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+            [sourceID rangeOfString:@"ASCII" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+            [sourceID rangeOfString:@"ABC" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+            [sourceID rangeOfString:@"US" options:NSCaseInsensitiveSearch].location != NSNotFound) {
+            return NO;
+        }
+        
+        if ([sourceID rangeOfString:@"Japanese" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+            [sourceID rangeOfString:@"Kotoeri" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+            [sourceID rangeOfString:@"atok" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+            [sourceID rangeOfString:@"kawasemi" options:NSCaseInsensitiveSearch].location != NSNotFound ||
+            [sourceID rangeOfString:@"aquaskk" options:NSCaseInsensitiveSearch].location != NSNotFound) {
+            return YES;
+        }
+    }
+    
+    if (languages != nil && [languages containsObject:@"ja"]) {
+        return YES;
+    }
+    
+    return NO;
+}
+
+static void tisCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
+    AppDelegate *delegate = (__bridge AppDelegate *)observer;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [delegate keyboardInputSourceChanged:nil];
+    });
+}
+
 CFMachPortRef eventTap = NULL;
 CFRunLoopSourceRef runLoopSource = NULL;
 NSUserDefaults *ud;
@@ -999,13 +1073,30 @@ static NSData *convTraditionalKeyData(NSData *in) {
     
     // 入力ソースの監視
     gKanaMethod = NO;
-    arKanaMethods = @[@"com.apple.inputmethod.Japanese",
-                      @"com.apple.inputmethod.Japanese.Katakana",
-                      @"com.apple.inputmethod.Japanese.HalfWidthKana"];
+    CFNotificationCenterAddObserver(
+        CFNotificationCenterGetDistributedCenter(),
+        (__bridge const void *)(self),
+        tisCallback,
+        kTISNotifySelectedKeyboardInputSourceChanged,
+        NULL,
+        CFNotificationSuspensionBehaviorDeliverImmediately
+    );
+    CFNotificationCenterAddObserver(
+        CFNotificationCenterGetDistributedCenter(),
+        (__bridge const void *)(self),
+        tisCallback,
+        kTISNotifyEnabledKeyboardInputSourcesChanged,
+        NULL,
+        CFNotificationSuspensionBehaviorDeliverImmediately
+    );
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(keyboardInputSourceChanged:)
                                                  name:NSTextInputContextKeyboardSelectionDidChangeNotification
                                                object:nil];
+    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                           selector:@selector(keyboardInputSourceChanged:)
+                                                               name:NSWorkspaceDidActivateApplicationNotification
+                                                             object:nil];
     [self keyboardInputSourceChanged:nil];
     
     if (prefEnabled) {
@@ -1288,6 +1379,11 @@ static CGEventRef keyUpDownEventCallback(CGEventTapProxy proxy, CGEventType type
     if (myCGEventGetFlags(event) & (kCGEventFlagMaskControl | kCGEventFlagMaskAlternate |
                                     kCGEventFlagMaskCommand | kCGEventFlagMaskHelp |
                                     kCGEventFlagMaskSecondaryFn | kCGEventFlagMaskNumericPad)) {
+        if (keycode == kVK_Space || keycode == kVK_JIS_Eisu || keycode == kVK_JIS_Kana) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(30 * NSEC_PER_MSEC)), dispatch_get_main_queue(), ^{
+                [self_ keyboardInputSourceChanged:nil];
+            });
+        }
         if (keycode < 0x0A || (0x0A < keycode && keycode < 0x24) || (0x24 < keycode && keycode < 0x30) || keycode == kVK_JIS_Yen || keycode == kVK_JIS_Underscore) {
 
             NSData *newkey = getKeyDataForOya(keycode, 6);
@@ -1314,6 +1410,12 @@ static CGEventRef keyUpDownEventCallback(CGEventTapProxy proxy, CGEventType type
         return returnPt(event, source);
     }
     
+    if (keycode == kVK_JIS_Eisu || keycode == kVK_JIS_Kana) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(30 * NSEC_PER_MSEC)), dispatch_get_main_queue(), ^{
+            [self_ keyboardInputSourceChanged:nil];
+        });
+    }
+    
     if (!gKanaMethod) { // 日本語入力でない
         gOya = 0;
         gPrevOya = 0;
@@ -1338,6 +1440,8 @@ static CGEventRef keyUpDownEventCallback(CGEventTapProxy proxy, CGEventType type
                     NSData *newkey = [[NSData alloc] initWithBytes:(unsigned char[]){kVK_JIS_Kana} length:1];
                     pressKeys(source, targetPid, newkey, myCGEventGetFlags(event));
                     hjbuf = 0;
+                    gKanaMethod = YES;
+                    [self_ updateSbIcon];
                     return NULL;
                 } else {
                     NSData *newkey = [[NSData alloc] initWithBytes:(unsigned char[]){hjbuf, keycode} length:2];
@@ -1487,22 +1591,15 @@ static CGEventRef keyUpDownEventCallback(CGEventTapProxy proxy, CGEventType type
         } else if (type == kCGEventKeyUp) {
             kana = [naginata releaseKey:keycode];
         }
-        // Google日本語入力で英数に切り替えてもかな入力される
-        if (kana != nil && [kana containsObject:@(kVK_JIS_Eisu)]) {
-            gKanaMethod = NO;
-            [self_ updateSbIcon];
-        }
-//        CGEventFlags flag = (CGEventFlags)0;
-//        for (NSNumber *k in kana) {
-//            if ([k intValue] == kVK_Shift) {
-//                flag = kCGEventFlagMaskShift;
-//            } else {
-//                NSData *newkey = [[NSData alloc] initWithBytes:(unsigned char[]){[k intValue]} length:1];
-//                pressKeys(source, targetPid, newkey, flag);
-//                flag = (CGEventFlags)0;
-//            }
-//        }
         if (kana != nil) {
+            if ([kana containsObject:@(kVK_JIS_Eisu)]) {
+                gKanaMethod = NO;
+                [naginata deepClear];
+                [self_ updateSbIcon];
+            } else if ([kana containsObject:@(kVK_JIS_Kana)]) {
+                gKanaMethod = YES;
+                [self_ updateSbIcon];
+            }
             pressKeys2(source, targetPid, kana);
         }
 //        if (type == kCGEventKeyDown) {
@@ -1820,12 +1917,34 @@ static void sendUnicode(CGEventSourceRef source, pid_t targetPid, NSString *str)
 - (void)keyboardInputSourceChanged:(NSNotification *)notification {
     TISInputSourceRef inputSource = TISCopyCurrentKeyboardInputSource();
     if (inputSource) {
-        NSString *mode = (__bridge NSString *)TISGetInputSourceProperty(inputSource, kTISPropertyInputModeID);
-        gKanaMethod = ((mode && [arKanaMethods containsObject:mode]) ? YES : NO);
+        BOOL newKana = isJapaneseInputSource(inputSource);
+        if (gKanaMethod != newKana) {
+            gKanaMethod = newKana;
+            if (!gKanaMethod) {
+                [naginata deepClear];
+            }
+        }
         CFRelease(inputSource);
         
         [self updateSbIcon];
     }
+}
+
+- (void)applicationWillTerminate:(NSNotification *)aNotification {
+    CFNotificationCenterRemoveObserver(
+        CFNotificationCenterGetDistributedCenter(),
+        (__bridge const void *)(self),
+        kTISNotifySelectedKeyboardInputSourceChanged,
+        NULL
+    );
+    CFNotificationCenterRemoveObserver(
+        CFNotificationCenterGetDistributedCenter(),
+        (__bridge const void *)(self),
+        kTISNotifyEnabledKeyboardInputSourcesChanged,
+        NULL
+    );
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
 }
 
 - (void)updateSbIcon {
